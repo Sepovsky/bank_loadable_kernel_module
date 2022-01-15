@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#define N 100
+#define N 100 
 
 int accounts[100];
 char mode;
@@ -66,6 +67,16 @@ void trx_bank(char mode, int from, int to, int amount){
     }
 }
 
+void show_accounts(){
+
+    for(int i=0; i<N; i++){
+
+        printf("[Balance of %d is %d],", i, accounts[i]);
+        if(i % 10 == 9) printf("\n");
+    
+    }
+}
+
 
 int main(){
 
@@ -74,12 +85,12 @@ int main(){
     char str[256];
 
     while (1){
+
         scanf("%s", str);
 
         mine_cmd(str);
         printf("%c-%d-%d-%d\n",mode, from, to, amount);
         trx_bank(mode, from, to, amount);
-
-        for(int i=0; i<N; i++) printf("[Balance of %d is %d]\n", i, accounts[i]);
+        show_accounts();
     }
 }
