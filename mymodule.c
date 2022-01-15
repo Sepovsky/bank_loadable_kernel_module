@@ -17,7 +17,7 @@
 #define BASE 10
 
 //global vars
-int accounts[100];
+static int accounts[100];
 char mode;
 int from = 0, to = 0, amount = 0;
 
@@ -27,7 +27,8 @@ void mine_cmd(char* cmd){
     int error;
     int i = 0;
     int part = 0;
-    char mine[4][10];
+    char mine[4][10] = {};
+    
     while (1){
 
         if(cmd[ctr] == '\0')
@@ -48,6 +49,11 @@ void mine_cmd(char* cmd){
     }
 
     mode = mine[0][0];
+    if(mode == 'r'){
+        int p;
+        for( p=0; p < N; p++) accounts[p] = DEFAULT_VALUE;
+        return;
+    }
 
     for(i=1; i < 4; i++){
 
@@ -55,7 +61,6 @@ void mine_cmd(char* cmd){
             if(mine[i][0] == '-') from = -1;
     
             else 
-                // from = atoi(mine[i]);
                 error = kstrtoint(mine[i], BASE, &from);
 
         }
@@ -63,15 +68,14 @@ void mine_cmd(char* cmd){
             if(mine[i][0] == '-') to = -1;
     
             else 
-                // to = atoi(mine[i]);
                 error = kstrtoint(mine[i], BASE, &to);
         }
         else if(i == 3){
-            // amount = atoi(mine[i]);
             error = kstrtoint(mine[i], BASE, &amount);
 
         }
     }
+
 }
 
 void trx_bank(char mode, int from, int to, int amount){
@@ -93,7 +97,7 @@ char* show_accounts(void){
     ans = kmalloc(5000, GFP_KERNEL);
     for(j=0; j<N; j++){
         char t[50];
-        sprintf(t, "[Balance of %d is %d],", j, accounts[j]);
+        sprintf(t, "%d,", accounts[j]);
         strcat(ans, t);
     }
 
@@ -105,7 +109,7 @@ char* show_accounts(void){
 //////
 
 //defines
-#define DEVICE_NAME "bank_module"
+#define DEVICE_NAME "mymodule"
 MODULE_LICENSE("GPL");
 
 static int bank_open(struct inode*, struct file*);
@@ -132,6 +136,9 @@ static int __init bank_init(void){
         printk(KERN_ALERT "bank_module load faild\n");
         return major;
     }
+
+    int k;
+    for(k=0; k < N; k++) accounts[k] = DEFAULT_VALUE;
 
     printk(KERN_ALERT "bank_module loaded: %d\n", major);
     return 0;
@@ -170,19 +177,22 @@ static ssize_t bank_read(struct file *filep, char *buffer, size_t len, loff_t *o
 
 //Event --> WRITE
 static ssize_t bank_write(struct file* filep, const char __user *buffer, size_t len, loff_t *offset){
-    char* input;
-    input = kmalloc(len, GFP_KERNEL);
+    char* input = NULL;
+    input = kmalloc(len + 1, GFP_KERNEL);
+    memset(input, 0, len+1);
 
     if(copy_from_user(input, buffer, len)){
         printk(KERN_INFO "we have errors\n");
         return -EFAULT;
     }
 
+    input[len] = 0;
     //lock
     mine_cmd(input);
     trx_bank(mode, from, to, amount);
     //lock
 
+    kfree(input);
     return len;
 }
 
