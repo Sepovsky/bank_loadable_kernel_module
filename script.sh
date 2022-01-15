@@ -1,5 +1,7 @@
 #!/bin/bash
-
+echo "=========================================================================="
+echo "Hello"
+echo "My name is Sepehr Shirani"
 echo "start making module..."
 make
 insmod mymodule.ko
@@ -11,3 +13,5 @@ echo "removing module...!!"
 rm /dev/iutnode
 rmmod mymodule
 make clean
+echo "Done!"
+echo "=========================================================================="

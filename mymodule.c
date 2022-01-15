@@ -31,6 +31,7 @@ void mine_cmd(char* cmd){
     int i = 0;
     int part = 0;
     char mine[4][10] = {};
+    int deli_ctr = 0;
     
     while (1){
 
@@ -38,7 +39,7 @@ void mine_cmd(char* cmd){
             break;
         
         else if(cmd[ctr] == ','){
-
+            deli_ctr++;
             i = 0;
             part++;
         }
@@ -49,6 +50,11 @@ void mine_cmd(char* cmd){
         }
 
         ctr++;
+
+        if(deli_ctr > 3){
+            printk(KERN_ALERT "Your format is wrong\n");
+            return;
+        }
     }
 
     mode = mine[0][0];
@@ -63,21 +69,33 @@ void mine_cmd(char* cmd){
     for(i=1; i < 4; i++){
 
         if(i == 1){
-            if(mine[i][0] == '-') from = -1;
+            if(strcmp(mine[i],"-") == 0) from = -1;
     
-            else 
+            else {
                 error = kstrtoint(mine[i], BASE, &from);
-
+                if(from > 100 || from < 0){
+                    printk(KERN_ALERT "From is not in range 0-99\n");
+                    return;
+                }
+            }
         }
         else if(i == 2){
-            if(mine[i][0] == '-') to = -1;
+            if(strcmp(mine[i],"-") == 0) to = -1;
     
-            else 
+            else {
                 error = kstrtoint(mine[i], BASE, &to);
+                if(to > 100 || to < 0){
+                    printk(KERN_ALERT "TO is not in range 0-99\n");
+                    return;
+                }
+            }
         }
         else if(i == 3){
             error = kstrtoint(mine[i], BASE, &amount);
-
+            if(amount < 0){
+                printk(KERN_ALERT "Amount is negative\n");
+                return;
+            }
         }
     }
 
@@ -95,9 +113,20 @@ void trx_bank(char mode, int from, int to, int amount){
         accounts[to] += amount;
     }
     else if(mode == 'v'){
+
+        if(from != -1){
+            printk(KERN_ALERT "From should be -\n");
+            return;
+        }
+
         accounts[to] += amount;
     }
     else if(mode == 'b'){
+
+        if(to != -1){
+            printk(KERN_ALERT "To should be -\n");
+            return;
+        }
 
         if(accounts[from] < amount){
             printk(KERN_ALERT "Your account balance is not enough\n");

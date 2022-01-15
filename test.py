@@ -9,7 +9,7 @@ MAX_PORTAL = 2
 # thread's function
 def donation():
     fd_t = os.open("/dev/iutnode" , os.O_RDWR)
-    
+
     for i in range(MAX_RANGNE):
         acc_num = random.randint(1, 99)
         amount = 1
