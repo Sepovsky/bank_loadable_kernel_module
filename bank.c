@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define N 100 
+#define N 100
+#define DEFAULT_VALUE 2000000
 
 int accounts[100];
 char mode;
@@ -80,7 +81,7 @@ void show_accounts(){
 
 int main(){
 
-    for(int i=0; i<100; i++) accounts[i] = 2000;
+    for(int i=0; i < N; i++) accounts[i] = DEFAULT_VALUE;
     
     char str[256];
 
