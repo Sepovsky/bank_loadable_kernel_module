@@ -6,6 +6,7 @@
 #include <linux/kthread.h> // kernel threads
 #include <linux/string.h> // for strings :)))
 #include <linux/slab.h>
+#include <linux/semaphore.h>
 
 /////////////////////////////////////
 // ====> Bank's logics
@@ -21,8 +22,10 @@ static int accounts[100];
 char mode;
 int from = 0, to = 0, amount = 0;
 
+static struct semaphore lock;
 
 void mine_cmd(char* cmd){
+
     int ctr = 0;
     int error;
     int i = 0;
@@ -49,6 +52,8 @@ void mine_cmd(char* cmd){
     }
 
     mode = mine[0][0];
+
+    // Check reset mode
     if(mode == 'r'){
         int p;
         for( p=0; p < N; p++) accounts[p] = DEFAULT_VALUE;
@@ -80,6 +85,12 @@ void mine_cmd(char* cmd){
 
 void trx_bank(char mode, int from, int to, int amount){
     if(mode == 'e'){
+
+        if(accounts[from] < amount){
+            printk(KERN_ALERT "Your account balance is not enough\n");
+            return;
+        }
+
         accounts[from] -= amount;
         accounts[to] += amount;
     }
@@ -87,6 +98,12 @@ void trx_bank(char mode, int from, int to, int amount){
         accounts[to] += amount;
     }
     else if(mode == 'b'){
+
+        if(accounts[from] < amount){
+            printk(KERN_ALERT "Your account balance is not enough\n");
+            return;
+        }
+
         accounts[from] -= amount;
     }
 }
@@ -130,6 +147,7 @@ static int major;
 // Event --> Load
 static int __init bank_init(void){
 
+    int k;
     major = register_chrdev(0, DEVICE_NAME, &fops);
     
     if(major < 0){
@@ -137,7 +155,8 @@ static int __init bank_init(void){
         return major;
     }
 
-    int k;
+    sema_init(&lock, 1);
+
     for(k=0; k < N; k++) accounts[k] = DEFAULT_VALUE;
 
     printk(KERN_ALERT "bank_module loaded: %d\n", major);
@@ -188,8 +207,12 @@ static ssize_t bank_write(struct file* filep, const char __user *buffer, size_t 
 
     input[len] = 0;
     //lock
+    down(&lock);
+
     mine_cmd(input);
     trx_bank(mode, from, to, amount);
+    
+    up(&lock);
     //lock
 
     kfree(input);
